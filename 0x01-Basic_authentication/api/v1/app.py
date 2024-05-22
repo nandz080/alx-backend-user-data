@@ -16,11 +16,12 @@ app = Flask(__name__)
 app.register_blueprint(app_views)
 CORS(app, resources={r"/api/v1/*": {"origins": "*"}})
 
-auth_type = os.getenv("AUTH_TYPE", "auth")
-if auth_type == "basic_auth":
-    auth = BasicAuth()
-else:
+auth = None
+
+if getenv("AUTH_TYPE") == "auth":
     auth = Auth()
+elif getenv("AUTH_TYPE") == "basic_auth":
+    auth = BasicAuth()
 
 @app.errorhandler(404)
 def not_found(error) -> str:
