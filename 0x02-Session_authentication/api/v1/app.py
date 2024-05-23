@@ -2,11 +2,13 @@
 """
 Route module for the API
 """
+import os
 from os import getenv
 from api.v1.views import app_views
 from api.v1.auth.auth import Auth
 from api.v1.auth.basic_auth import BasicAuth
 from api.v1.auth.session_auth import SessionAuth
+from api.v1.auth.session_exp_auth import SessionExpAuth
 from flask import Flask, jsonify, abort, request
 from flask_cors import CORS
 
@@ -14,14 +16,18 @@ app = Flask(__name__)
 app.register_blueprint(app_views)
 CORS(app, resources={r"/api/v1/*": {"origins": "*"}})
 
-auth = None
+auth_type = os.getenv("AUTH_TYPE", "basic_auth")
 
-if getenv("AUTH_TYPE") == "auth":
-    auth = Auth()
-elif getenv("AUTH_TYPE") == "basic_auth":
+if auth_type == "basic_auth":
     auth = BasicAuth()
-elif getenv("AUTH_TYPE") == "session_auth":
+elif auth_type == "session_auth":
     auth = SessionAuth()
+elif auth_type == "session_exp_auth":
+    auth = SessionExpAuth()
+else:
+    raise ValueError("Invalid AUTH_TYPE environment variable")
+
+app_views.before_request(auth.require_auth)
 
 @app.errorhandler(404)
 def not_found(error) -> str:
