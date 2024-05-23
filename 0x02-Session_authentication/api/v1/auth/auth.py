@@ -5,6 +5,8 @@ Module for authentification systems
 
 from flask import request
 from typing import TypeVar, List
+from os import getenv
+
 User = TypeVar('User')
 
 class Auth:
@@ -44,3 +46,12 @@ class Auth:
         Method that returns None - request
         """
         return None
+
+    def session_cookie(self, request=None):
+        """Method to retrieve the session cookie value from a request."""
+        if request is None:
+            return None
+        session_name = getenv('SESSION_NAME')
+        if session_name is None:
+            return None
+        return request.cookies.get(session_name)
