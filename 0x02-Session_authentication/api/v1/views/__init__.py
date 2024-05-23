@@ -11,4 +11,6 @@ from api.v1.views.users import *
 # Import User model to load users from file
 from models.user import User
 
+from api.v1.views import session_auth
+
 User.load_from_file()
