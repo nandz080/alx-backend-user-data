@@ -2,23 +2,25 @@
 """
 Module for user authentication
 """
-
 from db import DB
 from uuid import uuid4
-import bcrypt
 from user import User
+from bcrypt import hashpw, gensalt, checkpw
+from typing import TypeVar
 from sqlalchemy.orm.exc import NoResultFound
 
-def _hash_password(password: str) -> bytes:
-    """Method for hashing a password using bcrypt.
+
+def _hash_password(password: str) -> str:
+    """hash a password pass for user
 
     Args:
-        password (str): The password to hash.
+        password (str): password of user
 
     Returns:
-        bytes: The salted hash of the password.
+        str: password hashed
     """
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    return hashpw(password.encode('utf-8'), gensalt())
+
 
 def _generate_uuid() -> str:
     """generate uuid
@@ -27,6 +29,7 @@ def _generate_uuid() -> str:
         str: representation of a new UUID
     """
     return str(uuid4())
+
 
 class Auth:
     """Auth class to interact with the authentication database.
@@ -52,17 +55,33 @@ class Auth:
             return self._db.add_user(email, _hash_password(password))
 
     def valid_login(self, email: str, password: str) -> bool:
-        """Validate login credentials.
+        """valid login of user
 
         Args:
-            email (str): The email of the user.
-            password (str): The password to validate.
+            email (str): email of user
+            password (str): password of user
 
         Returns:
-            bool: True if login credentials are valid, False otherwise.
+            bool: [description]
         """
         try:
             user = self._db.find_user_by(email=email)
-            return bcrypt.checkpw(password.encode('utf-8'), user.hashed_password)
         except NoResultFound:
             return False
+        return checkpw(password.encode('utf-8'), user.hash_password)
+
+    def create_session(self, email: str) -> str:
+        """create a new session for user
+
+        Args:
+            email (str): email of user
+
+        Returns:
+            str: string representation of session ID
+        """
+        try:
+            user = self._db.find_user_by(email=email)
+            session_id = _generate_uuid()
+            self._db.update_user(user.id, session_id=session_id)
+        except NoResultFound:
+            return
